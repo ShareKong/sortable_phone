@@ -28,27 +28,20 @@
 }
 
 /* sortable class */
-.st-item-fixed {
+// sortable 盒子必须添加该类
+.sortable-panel {
+	position: relative;
+	>* {
+		position: relative;
+	}
+}
+// sortable 设置 handle 拥有该类则才能移动
+.st-item-fixed-1 {
 	background-color: #6c6c6c;
 	color: #C0C0C0;
 	>* {
 		background-color: #6c6c6c;
 		color: #C0C0C0;
-	}
-}
-.st-item-handle {
-	position: absolute;
-	right: 0;
-	top: 0;
-	width: 70rpx;
-	height: 100%;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	background-color: #4CD964;
-	.img {
-		width: 50rpx;
-		height: 50rpx;
 	}
 }
 

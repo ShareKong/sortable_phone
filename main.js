@@ -1,11 +1,13 @@
 import Vue from 'vue'
 import App from './App'
-import uView from "uview-ui";
+import uView from "uview-ui"
+import MoveHandle from 'components/MoverHandle.vue'
 // import VueConfig from './vue.config.js'
 
 
 Vue.config.productionTip = false
 Vue.use(uView);
+Vue.component('MoveHandle', MoveHandle);
 // Vue.use(VueConfig);
 App.mpType = 'app'
 

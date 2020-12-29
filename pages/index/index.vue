@@ -1,21 +1,27 @@
 <template>
 	<view class="content">
-		<view id="sort-1" class="sortable">
+		<!-- 删除 sortable -->
+		<div id="del" class="sortable-panel sortable_delete" v-show="!isPhone&&isShowDelete" :class="{'': isShowDeleteStyle}">
+			<text style="width: 100%; height: 100rpx;">将组件托到这里进行删除</text>
+		</div>
+		<view id="sort-1" class="sortable sortable-panel">
 			<template v-for="(result,index) in sorts.child">
 				<view data-id="search" :class="{'st-item-fixed': result.disable&&!isPhone}" class="search" v-if="result.sorts==1">
 					<image class="img" src="../../static/icon-img/search.png" mode=""></image>
 					<input class="search-input" type="text" v-model="search" placeholder="请输入关键词" />
 					<u-button @tap="searchSubmit" class="search-btn" type="primary" size="mini">search</u-button>
+					<move-handle :isPhone="isPhone"></move-handle>
 				</view>
 				
 				<swiper class="swiper" :indicator-dots="true" :circular="true" :autoplay="true" interval="5000" duration="500" v-if="result.sorts==2">
 					<swiper-item v-for="(item,index) in swiperList" :key="index">
 						<image class="img" :src="item.url" mode="scaleToFill"></image>
+						<move-handle :isPhone="isPhone"></move-handle>
 					</swiper-item>
 				</swiper>
 				
 				<u-form :model="form" ref="uForm" v-if="result.sorts==3">
-					<view id="sort-2">
+					<view id="sort-2"  class="sortable-panel">
 						<template v-for="res in result.child">
 							<u-form-item label="1 姓名" v-if="res.sorts==1">
 								<u-input v-model="form.name" />
@@ -25,7 +31,6 @@
 							</u-form-item>
 							<u-form-item label="3 性别" v-if="res.sorts==3">
 								<u-input v-model="form.sex" />
-								<!-- <view class="st-item-handle" v-if="!isPhone"><image class="img" src="../../static/icon-img/move.png" mode=""></image></view> -->
 							</u-form-item>
 							<u-form-item label="4 水果" v-if="res.sorts==4">
 								<u-checkbox-group>
@@ -46,9 +51,16 @@
 							</u-form-item>
 						</template>
 					</view>
+					<move-handle :isPhone="isPhone"></move-handle>
 				</u-form>
-				<view class="ipt" v-if="result.sorts == 'st-input'"><input type="text" value="新添加的组件-输入框" /></view>
-				<view class="ipt" v-if="result.sorts == 'st-botton'"><button type="default">新添加的组件-按钮</button></view>
+				<view class="ipt" v-if="result.sorts == 'st-input'">
+					<u-input type="text" v-model="result.default" :placeholder="result.placeholder||'请输入内容'"/>
+					<move-handle :isPhone="isPhone"></move-handle>
+				</view>
+				<view class="ipt" v-if="result.sorts == 'st-botton'">
+					<u-button type="primary">{{result.btn_text||'按钮'}}</u-button>
+					<move-handle :isPhone="isPhone"></move-handle>
+				</view>
 			</template>
 		</view>
 	</view>
@@ -67,7 +79,11 @@
 				sorts: [],
 				sorts_1: [],
 				sorts_2: [],
-				
+				sortable_options: {
+					name: 'sort',
+					pull: true,
+					put: false,
+				},
 				search: '',
 				// banners
 				swiperList: [{
@@ -137,6 +153,10 @@
 					pull: 'clone',
 					put: false,
 				},
+				// 控制删除组件显示
+				isShowDelete: false,
+				// 控制组件托到删除框时，删除框的样式
+				isShowDeleteStyle: false,
 			}
 		},
 		mounted() {
@@ -158,6 +178,7 @@
 			searchSubmit() {
 				console.log(this.search);
 			},
+			// 获取布局数据
 			async getEff(flag) {
 				const _this = this;
 				await uni.request({
@@ -166,9 +187,12 @@
 					success: async res => {
 						_this.sorts = await JSON.parse(res.data[0].sortable);
 						// console.log(_this.sorts)
-						_this.initSortable('sort-1', flag);
+						// console.log(JSON.stringify(_this.sorts))
+						_this.initSortable('sort-1', flag, 1);
 						setTimeout(() => {
-							_this.initSortable('sort-2', flag);
+							_this.initSortable('sort-2', flag, 2);
+							// 删除的 sortable
+							_this.initSortable('del', false, -1);
 						}, 500)
 					},
 					fail: async err => {
@@ -178,11 +202,19 @@
 					}
 				})
 			},
-			initSortable(id, flag) {
+			// 初始化 sortable
+			async initSortable(id, flag, level) {
+				// level : -1 删除框 1 一级sortable 2 二级sortable
 				const _this = this;
-				const el = document.getElementById(id);
-				const sortable = Sortable.create(el, {
-					group: _this.sortable_options,
+				const el = await document.getElementById(id);
+				let options = {};
+
+				options = await {
+					group: {
+						name: 'sort',
+						pull: true,
+						put: false,
+					},
 					animation: 200,
 					forceFallback: true,
 					dragClass: 'choose-active',
@@ -190,12 +222,38 @@
 					disabled: flag,
 					filter: '.st-item-fixed',
 					scroll: false,
-					// handle: '.st-item-handle',
+					handle: '.st-item-handle-1',
+					onStart: (evt) => {
+						_this.isShowDelete = true;
+					},
 					onEnd: (evt) => {
 						// console.log(evt);
 						_this.saveSort(evt, id)
+						_this.isShowDelete = false;
 					},
-				})
+					onAdd: (evt) => {
+						// console.log('onAdd:', evt);
+						let to_id = evt.to.id;
+						let from_id = evt.from.id;
+						let old_index = evt.oldIndex;
+						let new_index = evt.newIndex;
+						if(to_id == 'del') {
+							_this.deleteComp(from_id, to_id, old_index, new_index);
+						}
+						_this.$forceUpdate();
+					}
+				};
+				if(level == -1) {
+					options.group.pull = false;
+					options.group.put = true;
+				}
+				if(level == 2) {
+					delete options.handle;
+				}
+				setTimeout(() => {
+					// console.log(level, options)
+					Sortable.create(el, options);
+				}, 300)
 			},
 			// 保存排序
 			/**
@@ -241,15 +299,17 @@
 			save(event) {
 				const _this = this;
 				let dat = event.data;
-				let params = event.data.params;
+				let data = dat.data;
 				switch(dat.method)
 				{
 					case 'layoutSave':
 						_this.saveLayout();
 						break;
 					case 'add-st':
-						_this.addComponent(params)
+						_this.addComponent(data)
 						break;
+					case 'update':
+						_this.updateAttr(data)
 				}
 			},
 			// 保存布局到数据库
@@ -280,19 +340,69 @@
 					child_id: '',
 					child: [],
 				}
-				this.sorts.child.push(obj)
+				this.sorts.child.splice(0, 0, obj);
+				// this.sorts.child.push(obj)
 				// console.log(data_id)
 			},
-			
-			//test
-			test(e) {
-				console.log('悬停', e)
-			}
+			// 更新组件属性内容
+			updateAttr(data) {
+				// console.log('update', data);
+				
+				for(let k in data)
+				{
+					this.sorts.child[0][k] = data[k];
+				}
+				this.$forceUpdate();
+				// console.log(this.sorts)
+			},
+			// 删除组件
+			deleteComp(from_id, to_id, old_index, new_index) {
+				let sorts = this.sorts;
+				if(sorts.id == from_id) {
+					sorts.child.splice(old_index, 1);
+				}
+				else {
+					for(let k in sorts.child)
+					{
+						if(sorts.child[k].child_id == from_id) {
+							sorts.child[k].child.splice(old_index, 1)
+						}
+					}
+				}
+				console.log('删除成功')
+				// this.saveLayout();
+				// window.parent.postMessage({
+				// 	method: 'deleteSuccess',
+				// }, '*');
+			},
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
+	.sortable_delete {
+		position: fixed;
+		top: 2rpx;
+		left: 2rpx;
+		width: 250rpx;
+		height: 250rpx;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		border: 2rpx dotted #F56C6C;
+		padding: 40rpx;
+		border-radius: 20rpx;
+		color: #F56C6C;
+		z-index: 999;
+		background-color: white;
+		transition: all 1s;
+		overflow: hidden;
+		* {
+			width: 0;
+			height: 0;
+			overflow: hidden;
+		}
+	}
 	
 	.content {
 		padding: 0 20rpx;
