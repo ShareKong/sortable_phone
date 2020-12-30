@@ -240,6 +240,11 @@
 						if(to_id == 'del') {
 							_this.deleteComp(from_id, to_id, old_index, new_index);
 						}
+						
+						evt.item.style.width = 0;
+						evt.item.style.height = 0;
+						evt.item.style.overflow = 'hidden';
+						
 						_this.$forceUpdate();
 					}
 				};
