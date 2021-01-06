@@ -61,7 +61,7 @@
 				// 要删除的组件 unique
 				delete_unique: -1,
 				// 当前页面请求数据排版的id
-				id: 1000,
+				id: 1005,
 			}
 		},
 		mounted() {
@@ -258,15 +258,17 @@
 				let attr_obj = params.attr_obj;
 				attr_obj.unique = Math.floor((new Date()).getTime() / 1000);
 				
-				if(attr_obj.child_id) {
+				if(attr_obj.child_id == -1) {
 					attr_obj.child_id = Math.floor((new Date()).getTime());
 				}
 				
 				// console.log(attr_obj)
 				this.sorts.child.splice(0, 0, attr_obj);
-				setTimeout(() => {
-					_this.initSortable(attr_obj.child_id, this.isPhone, 2);
-				}, 100)
+				if(attr_obj.child_id == -1) {
+					setTimeout(() => {
+						_this.initSortable(attr_obj.child_id, this.isPhone, 2);
+					}, 100)
+				}
 			},
 			// 更新组件属性内容
 			updateAttr(data) {
@@ -283,11 +285,16 @@
 					}
 				}
 				
+				this.pageIsChange();
 				this.$forceUpdate();
 				// console.log(this.sorts)
 			},
 			// 使用 拖动 删除组件
 			deleteComp(from_id, to_id, old_index, new_index) {
+				// from_id 删除的是哪个 sortable 盒子中的项
+				// to_id 删除框的 id
+				// old_index 要删除组件在原来盒子中的索引
+				// new_index 要删除组件在新盒子中的索引
 				let sorts = this.sorts;
 				if(sorts.id == from_id) {
 					sorts.child.splice(old_index, 1);

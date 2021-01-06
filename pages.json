@@ -64,7 +64,7 @@
     ],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
-		"navigationBarTitleText": "sortable_demo",
+		"navigationBarTitleText": "uni_sortable_demo",
 		"navigationBarBackgroundColor": "#0055ff",
 		"backgroundColor": "#F8F8F8"
 	}

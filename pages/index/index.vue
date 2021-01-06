@@ -258,15 +258,17 @@
 				let attr_obj = params.attr_obj;
 				attr_obj.unique = Math.floor((new Date()).getTime() / 1000);
 				
-				if(attr_obj.child_id) {
+				if(attr_obj.child_id == -1) {
 					attr_obj.child_id = Math.floor((new Date()).getTime());
 				}
 				
 				// console.log(attr_obj)
 				this.sorts.child.splice(0, 0, attr_obj);
-				setTimeout(() => {
-					_this.initSortable(attr_obj.child_id, this.isPhone, 2);
-				}, 100)
+				if(attr_obj.child_id == -1) {
+					setTimeout(() => {
+						_this.initSortable(attr_obj.child_id, this.isPhone, 2);
+					}, 100)
+				}
 			},
 			// 更新组件属性内容
 			updateAttr(data) {
@@ -283,6 +285,7 @@
 					}
 				}
 				
+				this.pageIsChange();
 				this.$forceUpdate();
 				// console.log(this.sorts)
 			},
