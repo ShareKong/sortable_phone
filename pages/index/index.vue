@@ -67,6 +67,7 @@
 			}
 		},
 		mounted() {
+			window.addEventListener('message', this.save);
 			let isPhone = navigator.userAgent.toLowerCase();
 			const _this = this;
 			setTimeout(() => {
@@ -79,7 +80,6 @@
 					_this.isPhone = true;
 				}
 			}, 500)
-			window.addEventListener('message', this.save);
 			// _this.initSortable('del', false, -1);
 		},
 		computed: {
@@ -242,6 +242,7 @@
 			},
 			// 监听父窗口请求
 			save(event) {
+				// console.log(event.data);
 				const _this = this;
 				let dat = event.data;
 				let data = dat.data;
@@ -298,7 +299,7 @@
 				if(attr_obj.child_id == -1) {
 					attr_obj.child_id = Math.floor((new Date()).getTime());
 				}
-				
+				// console.log(attr_obj)
 				this.sorts.child.splice(0, 0, attr_obj);
 				let obj = {
 					id: this.sorts.id,
@@ -308,7 +309,7 @@
 				this.back_data.push(obj);
 				
 				// 当组件内部存在 sortable 盒子时，初始化该盒子
-				if(attr_obj.child_id == -1) {
+				if(attr_obj.child_id) {
 					setTimeout(() => {
 						_this.initSortable(attr_obj.child_id, this.isPhone, 2);
 					}, 100)
@@ -455,8 +456,9 @@
 			},
 			// 返回上一步
 			backData() {
-				// sort 排序时 delete 删除时 add 新增组件时
+				// sort 排序时 delete 删除时 add 新增组件时 update 更新组件属性时
 				if(this.back_data.length <= 0) return; 
+				const _this = this;
 				let sorts = this.sorts;
 				let obj = this.back_data.pop();
 				switch(obj.type)
@@ -467,12 +469,18 @@
 					case 'delete':
 						if(sorts.id == obj.id) {
 							this.sorts.child.splice(obj.index, 0, obj.item);
+							// console.log(obj)
+							if(obj.item.child_id) {
+								setTimeout(() => {
+									_this.initSortable(obj.item.child_id, _this.isPhone, 2);
+								}, 100)
+							}
 						}
 						else {
 							let childs = sorts.child;
 							for(let k in childs)
 							{
-								if(childs[k].id == id) {
+								if(childs[k].id == obj.id) {
 									this.sorts.child[k].child.splice(obj.index, 0, obj.item);
 								}
 							}
@@ -504,6 +512,7 @@
 						this.$forceUpdate();
 						break;
 				}
+				this.pageIsChange();
 				// console.log(obj, this.back_data);
 			},
 			// 根据 id 和 index 查找对应项
