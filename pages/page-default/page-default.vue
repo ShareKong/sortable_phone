@@ -102,11 +102,6 @@
 							}
 						}, 100)
 					},
-					// fail: async err => {
-					// 	if(uni.getStorageSync('sortable')) {
-					// 		_this.sorts = uni.getStorageSync('sortable');
-					// 	}
-					// }
 				})
 			},
 			// 初始化 sortable

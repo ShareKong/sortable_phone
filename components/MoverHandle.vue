@@ -1,6 +1,6 @@
 <template>
 	<view>
-		<view class="st-item-handle-1" :class="{'level-2': level==2}" v-if="!isPhone">
+		<view ref="handle" @tap="choose" class="st-item-handle-1" :class="{'level-2': level==2, 'bg-red': is_show}" v-if="!isPhone">
 			<image class="img" src="../static/icon-img/move.png" mode=""></image>
 		</view>
 	</view>
@@ -18,6 +18,25 @@
 				default: 1
 			}
 		},
+		data: () => {
+			return {
+				uid: -1,
+				new_uid: 0,
+				is_show: false,
+			}
+		},
+		methods: {
+			choose(e) {
+				let scroll_y = e.detail.y;
+				window.parent.postMessage({
+					method: "getScrollY",
+					data: {
+						scroll_y,
+					}
+				}, '*')
+				this.$emit('choose');
+			},
+		}
 	}
 </script>
 
@@ -36,6 +55,9 @@
 	// background-color: #E6A23C;
 	background-color: #4CD964;
 	z-index: 997;
+	&:hover {
+		background-color: #53ef6d;
+	}
 	.img {
 		width: 50rpx;
 		height: 50rpx;
@@ -48,6 +70,14 @@
 
 .level-2 {
 	right: 72rpx;
-	background-color: #4CD964;
+	// background-color: #4CD964;
+	background-color: #E6A23C;
+	&:hover {
+		background-color: #f9af40;
+	}
+}
+
+.bg-red {
+	background-color: #f00;
 }
 </style>
