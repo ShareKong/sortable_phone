@@ -1,9 +1,9 @@
 <template>
 	<view class="content">
 		<!-- 删除 sortable -->
-		<div id="del" class="sortable-panel sortable_delete" v-show="!isPhone&&isShowDelete" :class="{'': isShowDeleteStyle}">
+		<!-- <div id="del" class="sortable-panel sortable_delete" v-show="!isPhone&&isShowDelete" :class="{'': isShowDeleteStyle}">
 			<image style="width: 100rpx;height: 100rpx;opacity: 0.7;" src="@/static/icon-img/delete.png" mode=""></image>
-		</div>
+		</div> -->
 		
 		<view id="sort-1" class="sortable sortable-panel">
 			<template v-for="(result,index) in sorts.child">
@@ -62,6 +62,8 @@
 				delete_unique: -1,
 				// 当前页面请求数据排版的id
 				id: 1000,
+				// 用于返回操作
+				back_data: [],
 			}
 		},
 		mounted() {
@@ -78,7 +80,13 @@
 				}
 			}, 500)
 			window.addEventListener('message', this.save);
-			_this.initSortable('del', false, -1);
+			// _this.initSortable('del', false, -1);
+		},
+		computed: {
+			// 监听页面布局是否发生改变
+			isPageChange() {
+				return this.data_sorts == JSON.stringify(this.sorts);
+			},
 		},
 		methods: {
 			// 获取布局数据
@@ -102,6 +110,11 @@
 							}
 						}, 100)
 					},
+					// fail: async err => {
+					// 	if(uni.getStorageSync('sortable')) {
+					// 		_this.sorts = uni.getStorageSync('sortable');
+					// 	}
+					// }
 				})
 			},
 			// 初始化 sortable
@@ -131,7 +144,9 @@
 					},
 					onEnd: (evt) => {
 						// console.log(evt);
-						_this.saveSort(evt, id)
+						let old_index = evt.oldIndex;
+						let new_index = evt.newIndex;
+						_this.saveSort(new_index, old_index, id)
 						_this.isShowDelete = false;
 						_this.pageIsChange();
 					},
@@ -143,6 +158,16 @@
 						let old_index = evt.oldIndex;
 						let new_index = evt.newIndex;
 						if(to_id == 'del') {
+							let item = _this.searchByIdAndIndex(from_id, old_index);
+							let obj = {
+								id: from_id,
+								type: 'delete',
+								index: old_index,
+								item,
+							}
+							// console.log(obj);
+							_this.back_data.push(obj);
+							
 							_this.deleteComp(from_id, to_id, old_index, new_index);
 							evt.item.style.width = 0;
 							evt.item.style.height = 0;
@@ -150,6 +175,22 @@
 						}
 						
 						_this.$forceUpdate();
+					},
+					// 只有在盒子内可移动项的排序发生改变时才会触发
+					onUpdate: (evt) => {
+						// console.log('update sort', evt)
+						let to_id = evt.to.id;
+						let from_id = evt.from.id;
+						let old_index = evt.oldIndex;
+						let new_index = evt.newIndex;
+						let obj = {
+							id: to_id,
+							old_index: new_index,
+							new_index: old_index,
+							type: 'sort',
+						};
+						this.back_data.push(obj);
+						// console.log(this.back_data);
 					}
 				};
 				if(level == -1) {
@@ -165,12 +206,10 @@
 				}, 300)
 			},
 			// 保存排序
-			async saveSort(evt, id) {
+			async saveSort(new_index, old_index, id) {
 				// evt 对象 id 表示可拖拽组的 id
 				const _this = this;
 				const sorts = _this.sorts;
-				let old_index = evt.oldIndex;
-				let new_index = evt.newIndex;
 				
 				if(sorts.id == id) {
 					if(old_index < new_index) {
@@ -220,6 +259,9 @@
 					case 'deleteCompUnique':
 						_this.deleteCompUnique();
 						break;
+					case 'backData':
+						_this.backData();
+						break;
 				}
 			},
 			// 保存布局到数据库
@@ -252,13 +294,20 @@
 				const _this = this;
 				let attr_obj = params.attr_obj;
 				attr_obj.unique = Math.floor((new Date()).getTime() / 1000);
-				
+				// 当组件内部存在 sortable 盒子时，设置该盒子的 id
 				if(attr_obj.child_id == -1) {
 					attr_obj.child_id = Math.floor((new Date()).getTime());
 				}
 				
-				// console.log(attr_obj)
 				this.sorts.child.splice(0, 0, attr_obj);
+				let obj = {
+					id: this.sorts.id,
+					type: 'add',
+					index: 0,
+				};
+				this.back_data.push(obj);
+				
+				// 当组件内部存在 sortable 盒子时，初始化该盒子
 				if(attr_obj.child_id == -1) {
 					setTimeout(() => {
 						_this.initSortable(attr_obj.child_id, this.isPhone, 2);
@@ -268,15 +317,26 @@
 			// 更新组件属性内容
 			updateAttr(data) {
 				// console.log('update', data);
+				const _this = this;
 				let sorts = this.sorts;
 				
 				for(let k in sorts.child)
 				{
 					if(sorts.child[k].unique == data.unique) {
+						let item = JSON.parse(JSON.stringify(sorts.child[k]));
+						let obj = {
+							id: sorts.id,
+							type: 'update',
+							unique: sorts.child[k].unique,
+							item,
+						};
+						this.back_data.push(obj);
+						// console.log(item);
 						for(let kk in data)
 						{
-							this.sorts.child[k][kk] = data[kk];
+							_this.sorts.child[k][kk] = data[kk];
 						}
+						break;
 					}
 				}
 				
@@ -306,9 +366,9 @@
 			},
 			// 监听页面布局改变，发送信号到父窗口
 			pageIsChange() {
-				let data_sorts = this.data_sorts;
-				let sorts = JSON.stringify(this.sorts);
-				if(data_sorts == sorts) {
+				// let data_sorts = this.data_sorts;
+				// let sorts = JSON.stringify(this.sorts);
+				if(this.isPageChange) {
 					window.parent.postMessage({
 						method: 'pageLayoutChange',
 						data: {
@@ -347,6 +407,13 @@
 				for(let k in sorts.child)
 				{
 					if(sorts.child[k].unique == this.delete_unique) {
+						let obj = {
+							id: sorts.id,
+							type: 'delete',
+							index: k,
+							item: sorts.child[k],
+						}
+						this.back_data.push(obj);
 						sorts.child.splice(k, 1);
 						flag = true;
 						break;
@@ -356,6 +423,13 @@
 						{
 							let v = sorts.child[k].child[kk];
 							if(v.unique == this.delete_unique) {
+								let obj = {
+									id: sorts.child[k].id,
+									type: 'delete',
+									index: kk,
+									item: v,
+								}
+								this.back_data.push(obj);
 								sorts.child[k].child.splice(kk, 1)
 								flag = true;
 								break;
@@ -379,7 +453,78 @@
 				// 	}, '*');
 				// }
 			},
-
+			// 返回上一步
+			backData() {
+				// sort 排序时 delete 删除时 add 新增组件时
+				if(this.back_data.length <= 0) return; 
+				let sorts = this.sorts;
+				let obj = this.back_data.pop();
+				switch(obj.type)
+				{
+					case 'sort':
+						this.saveSort(obj.new_index, obj.old_index, obj.id);
+						break;
+					case 'delete':
+						if(sorts.id == obj.id) {
+							this.sorts.child.splice(obj.index, 0, obj.item);
+						}
+						else {
+							let childs = sorts.child;
+							for(let k in childs)
+							{
+								if(childs[k].id == id) {
+									this.sorts.child[k].child.splice(obj.index, 0, obj.item);
+								}
+							}
+						}
+						break;
+					case 'add':
+						this.sorts.child.splice(obj.index, 1);
+						break;
+					case 'update':
+						if(sorts.id == obj.id) {
+							for(let k in sorts.child)
+							{
+								if(sorts.child[k].unique == obj.unique) {
+									for(let kk in obj.item)
+									{
+										this.sorts.child[k][kk] = obj.item[kk];
+									}
+									break;
+								}
+							}
+						}
+						// 更新到父窗口
+						window.parent.postMessage({
+							method: 'activeGetUnique',
+							data: {
+								item: JSON.parse(JSON.stringify(obj.item))
+							}
+						}, '*');
+						this.$forceUpdate();
+						break;
+				}
+				// console.log(obj, this.back_data);
+			},
+			// 根据 id 和 index 查找对应项
+			searchByIdAndIndex(id, index) {
+				let sorts = this.sorts;
+				
+				if(sorts.id == id) {
+					return sorts.child[index];
+				}
+				else {
+					let childs = sorts.child;
+					for(let k in childs)
+					{
+						if(childs[k].id == id) {
+							return childs[k][index];
+						}
+					}
+				}
+				return -1;
+			},
+			
 		}
 	}
 </script>
