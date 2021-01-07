@@ -1,6 +1,13 @@
 <template>
 	<view class="ipt">
-		<u-button type="primary" :style="attr" @tap="buttonClick">{{dat.button_text||'按钮'}}</u-button>
+		
+		<u-button 
+			:type="dat.button_type" 
+			:size="dat.button_size"
+			:plain="dat.button_plain=='false'?false:true"
+			:shape="dat.button_shape"
+			@tap="buttonClick">{{dat.button_text||'按钮'}}</u-button>
+		
 		<move-handle :isPhone="isPhone" @choose="activeGetSorts"></move-handle>
 	</view>
 </template>
@@ -17,26 +24,7 @@
 		},
 		data () {
 			return {
-				attr: {}
-			}
-		},
-		watch: {
-			monitorDat (n, o) {
-				this.attr = n;
-			}
-		},
-		computed: {
-			monitorDat() {
-				return {
-					'background-color': this.dat.background_color,
-					'color': this.dat.text_color,
-				}
-			}
-		},
-		mounted() {
-			this.attr = {
-				'background-color': this.dat.background_color,
-				'color': this.dat.text_color,
+				
 			}
 		},
 		methods: {

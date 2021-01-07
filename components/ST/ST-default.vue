@@ -1,6 +1,8 @@
 <template>
 	<view class="st-default">
 		
+		<!-- 你的代码放在这里 -->
+		
 		<move-handle :isPhone="isPhone" @choose="activeGetSorts"></move-handle>
 	</view>
 </template>
