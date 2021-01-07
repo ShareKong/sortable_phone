@@ -263,6 +263,9 @@
 					case 'backData':
 						_this.backData();
 						break;
+					case 'advance':
+						_this.advance();
+						break;
 				}
 			},
 			// 保存布局到数据库
@@ -442,7 +445,7 @@
 					}
 				}
 				
-				// this.pageIsChange();
+				this.pageIsChange();
 				// if(flag) {
 				// 	window.parent.postMessage({
 				// 		method: 'deleteSuccess'
@@ -532,6 +535,10 @@
 					}
 				}
 				return -1;
+			},
+			// 前进一步
+			advance() {
+				console.log('advance one')
 			},
 			
 		}

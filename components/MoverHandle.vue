@@ -52,11 +52,10 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	// background-color: #E6A23C;
-	background-color: #4CD964;
+	background-color: #f0f0f0;
 	z-index: 997;
 	&:hover {
-		background-color: #53ef6d;
+		background-color: #e6e6e6;
 	}
 	.img {
 		width: 50rpx;
@@ -70,11 +69,6 @@
 
 .level-2 {
 	right: 72rpx;
-	// background-color: #4CD964;
-	background-color: #E6A23C;
-	&:hover {
-		background-color: #f9af40;
-	}
 }
 
 .bg-red {
