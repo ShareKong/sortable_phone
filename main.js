@@ -3,6 +3,7 @@ import App from './App'
 import uView from "uview-ui"
 import MoveHandle from 'components/MoverHandle.vue'
 // import VueConfig from './vue.config.js'
+import publicModel from './model/public.js'
 
 
 Vue.config.productionTip = false
@@ -10,6 +11,7 @@ Vue.use(uView);
 Vue.component('MoveHandle', MoveHandle);
 // Vue.use(VueConfig);
 App.mpType = 'app'
+Vue.prototype.http = publicModel;
 
 
 
@@ -29,4 +31,11 @@ App.mpType = 'app'
 const app = new Vue({
 	...App
 })
+
+import HttpInterceptor from './common/http.interceptor.js';
+
+Vue.use(HttpInterceptor, app);
+
 app.$mount()
+
+export default app

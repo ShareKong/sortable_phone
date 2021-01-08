@@ -1,5 +1,5 @@
 <template>
-	<view class="content">
+	<view class="content" :style="{'background-color': page_info.page_background_color}">
 		<!-- 删除 sortable -->
 		<!-- <div id="del" class="sortable-panel sortable_delete" v-show="!isPhone&&isShowDelete" :class="{'': isShowDeleteStyle}">
 			<image style="width: 100rpx;height: 100rpx;opacity: 0.7;" src="@/static/icon-img/delete.png" mode=""></image>
@@ -48,6 +48,8 @@
 		
 		data() {
 			return {
+				// 保存页面信息
+				page_info: {},
 				// 保存布局的原始数据（不可改变）
 				data_sorts: [],
 				// 项目的布局数据（可改变）
@@ -64,6 +66,8 @@
 				id: 1000,
 				// 用于返回操作
 				back_data: [],
+				// 用于前进操作
+				advance_data: [],
 			}
 		},
 		mounted() {
@@ -92,29 +96,22 @@
 			// 获取布局数据
 			async getEff(flag) {
 				const _this = this;
-				await uni.request({
-					url: 'http://thinkphp/get_data?id=' + _this.id,
-					method: 'GET',
-					success: async res => {
-						_this.data_sorts = res.data.sortable;
-						_this.sorts = await JSON.parse(res.data.sortable);
-						// console.log(_this.sorts)
-						// console.log(JSON.stringify(_this.sorts))
-						_this.initSortable('sort-1', flag, 1);
-						setTimeout(() => {
-							for(let k in _this.sorts.child)
-							{
-								if(_this.sorts.child[k].child_id) {
-									_this.initSortable(_this.sorts.child[k].child_id, flag, 2);
-								}
+				this.http.getSortable(_this.id).then(async res => {
+					_this.page_info = res;
+					_this.data_sorts = res.sortable;
+					_this.sorts = await JSON.parse(res.sortable);
+					// console.log(_this.sorts)
+					// console.log(JSON.stringify(_this.sorts))
+					_this.initSortable('sort-1', flag, 1);
+					_this.setPageInfo(res);
+					setTimeout(() => {
+						for(let k in _this.sorts.child)
+						{
+							if(_this.sorts.child[k].child_id) {
+								_this.initSortable(_this.sorts.child[k].child_id, flag, 2);
 							}
-						}, 100)
-					},
-					// fail: async err => {
-					// 	if(uni.getStorageSync('sortable')) {
-					// 		_this.sorts = uni.getStorageSync('sortable');
-					// 	}
-					// }
+						}
+					}, 100)
 				})
 			},
 			// 初始化 sortable
@@ -265,6 +262,9 @@
 						break;
 					case 'advance':
 						_this.advance();
+						break;
+					case 'setPageSuccess':
+						_this.setPageSuccess();
 						break;
 				}
 			},
@@ -464,6 +464,10 @@
 				const _this = this;
 				let sorts = this.sorts;
 				let obj = this.back_data.pop();
+				console.log('obj:', obj)
+				// 前进操作数据
+				this.advance_data.push(obj);
+				
 				switch(obj.type)
 				{
 					case 'sort':
@@ -472,7 +476,6 @@
 					case 'delete':
 						if(sorts.id == obj.id) {
 							this.sorts.child.splice(obj.index, 0, obj.item);
-							// console.log(obj)
 							if(obj.item.child_id) {
 								setTimeout(() => {
 									_this.initSortable(obj.item.child_id, _this.isPhone, 2);
@@ -538,7 +541,74 @@
 			},
 			// 前进一步
 			advance() {
-				console.log('advance one')
+				// 操作type: sort 排序 delete 删除 add 新增组件 update 更新组件属性
+				if(this.advance_data.length <= 0) return; 
+				const _this = this;
+				let sorts = this.sorts;
+				let obj = this.advance_data.pop();
+				console.log('advance:', this.advance_data);
+				switch(obj.type)
+				{
+					case 'sort':
+						this.saveSort(obj.old_index, obj.new_index, obj.id);
+						break;
+					case 'delete':
+						if(sorts.id == obj.id) {
+							this.sorts.child.splice(obj.index, 1);
+							// console.log(obj)
+							if(obj.item.child_id) {
+								setTimeout(() => {
+									_this.initSortable(obj.item.child_id, _this.isPhone, 2);
+								}, 100)
+							}
+						}
+						else {
+							let childs = sorts.child;
+							for(let k in childs)
+							{
+								if(childs[k].id == obj.id) {
+									this.sorts.child[k].child.splice(obj.index, 1);
+								}
+							}
+						}
+						break;
+					case 'add':
+						this.sorts.child.splice(obj.index, 0, obj);
+						break;
+					case 'update':
+						if(sorts.id == obj.id) {
+							for(let k in sorts.child)
+							{
+								if(sorts.child[k].unique == obj.unique) {
+									for(let kk in obj.item)
+									{
+										this.sorts.child[k][kk] = obj.item[kk];
+									}
+									break;
+								}
+							}
+						}
+						// 更新到父窗口
+						window.parent.postMessage({
+							method: 'activeGetUnique',
+							data: {
+								item: JSON.parse(JSON.stringify(obj.item))
+							}
+						}, '*');
+						this.$forceUpdate();
+						break;
+				}
+				this.pageIsChange();
+			},
+			// 设置页面信息
+			setPageInfo(page_info) {
+				uni.setNavigationBarTitle({
+					title: page_info.page_name,
+				})
+			},
+			// 页面信息设置成功
+			setPageSuccess() {
+				this.getEff();
 			},
 			
 		}
@@ -571,7 +641,8 @@
 	}
 	
 	.content {
-		padding: 0 20rpx;
+		padding: 20rpx 20rpx;
+		min-height: calc(100vh - 44px);
 
 		.sortable {
 			width: 100%;
@@ -579,6 +650,12 @@
 			>* {
 				margin-top: 30rpx;
 				margin-bottom: 30rpx;
+				&:first-child {
+					margin-top: 0;
+				}
+				&:last-child {
+					margin-bottom: 0;
+				}
 			}
 		}
 	}

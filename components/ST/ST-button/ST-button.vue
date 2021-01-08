@@ -1,12 +1,14 @@
 <template>
-	<view class="ipt">
+	<view class="st-button">
 		
-		<u-button 
-			:type="dat.button_type" 
-			:size="dat.button_size"
-			:plain="dat.button_plain=='false'?false:true"
-			:shape="dat.button_shape"
-			@tap="buttonClick">{{dat.button_text||'按钮'}}</u-button>
+		<view class="button">
+			<u-button
+				:type="dat.button_type" 
+				:size="dat.button_size"
+				:plain="dat.button_plain=='false'?false:true"
+				:shape="dat.button_shape"
+				@tap="buttonClick">{{dat.button_text||'按钮'}}</u-button>
+		</view>
 		
 		<move-handle :isPhone="isPhone" @choose="activeGetSorts"></move-handle>
 	</view>
@@ -40,4 +42,7 @@
 </script>
 
 <style lang="scss" scoped>
+.st-button {
+	text-align: center;
+}
 </style>
