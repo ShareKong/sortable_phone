@@ -20,6 +20,8 @@
 				
 				<st-applys v-if="result.sorts == 'st-applys'" :isPhone="isPhone" :dat="result" @getUnique="activeGetUnique"></st-applys>
 				
+				<st-notice v-if="result.sorts == 'st-notice'" :isPhone="isPhone" :dat="result" @getUnique="activeGetUnique"></st-notice>
+				
 			</template>
 		</view>
 	</view>
@@ -34,6 +36,7 @@
 	import STbutton from '@/components/ST/ST-button/ST-button.vue';
 	import STinput from '@/components/ST/ST-input/ST-input.vue';
 	import STapplys from '@/components/ST/ST-applys/ST-applys.vue';
+	import STnotice from '@/components/ST/ST-notice/ST-notice.vue';
 	
 	export default {
 		components: {
@@ -44,6 +47,7 @@
 			'st-button': STbutton,
 			'st-input': STinput,
 			'st-applys': STapplys,
+			'st-notice': STnotice,
 		},
 		
 		data() {
@@ -464,7 +468,7 @@
 				const _this = this;
 				let sorts = this.sorts;
 				let obj = this.back_data.pop();
-				console.log('obj:', obj)
+				// console.log('obj:', obj)
 				// 前进操作数据
 				this.advance_data.push(obj);
 				
