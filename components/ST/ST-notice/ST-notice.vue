@@ -4,7 +4,7 @@
 		<view class="notice">
 			<u-notice-bar
 				:list="list"
-				:type="dat.notice_item"
+				:type="dat.theme_type"
 				:mode="dat.notice_scroll"
 				:is-circular="dat.notice_join=='false'?false:true"
 			></u-notice-bar>

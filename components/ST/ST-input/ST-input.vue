@@ -1,6 +1,6 @@
 <template>
 	<view class="ipt">
-		<u-input type="text" v-model="dat.value" :placeholder="dat.placeholder||'请输入内容'"/>
+		<u-input type="text" v-model="dat.default_value" :placeholder="dat.placeholder||'请输入内容'"/>
 		<move-handle :isPhone="isPhone" @choose="activeGetSorts"></move-handle>
 	</view>
 </template>
@@ -19,9 +19,6 @@
 			return {}
 		},
 		methods: {
-			inputValue() {
-				this.$emit('value', dat.default);
-			},
 			// 鼠标点击组件获取该组件的 unique
 			activeGetSorts() {
 				this.$emit('getUnique', this.dat);

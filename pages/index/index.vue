@@ -72,6 +72,10 @@
 				back_data: [],
 				// 用于前进操作
 				advance_data: [],
+				// 保存最后一次返回上一步操作的数据
+				back_last_data: {},
+				// 后退和前进最多能保存长度
+				back_advance_len: 10,
 			}
 		},
 		mounted() {
@@ -95,6 +99,7 @@
 			isPageChange() {
 				return this.data_sorts == JSON.stringify(this.sorts);
 			},
+			
 		},
 		methods: {
 			// 获取布局数据
@@ -143,14 +148,6 @@
 					onStart: (evt) => {
 						_this.isShowDelete = true;
 					},
-					onEnd: (evt) => {
-						// console.log(evt);
-						let old_index = evt.oldIndex;
-						let new_index = evt.newIndex;
-						_this.saveSort(new_index, old_index, id)
-						_this.isShowDelete = false;
-						_this.pageIsChange();
-					},
 					// 该方法目前争对删除框
 					onAdd: (evt) => {
 						// console.log('onAdd:', evt);
@@ -180,10 +177,14 @@
 					// 只有在盒子内可移动项的排序发生改变时才会触发
 					onUpdate: (evt) => {
 						// console.log('update sort', evt)
+						// console.log('sort end');
 						let to_id = evt.to.id;
 						let from_id = evt.from.id;
 						let old_index = evt.oldIndex;
 						let new_index = evt.newIndex;
+						_this.saveSort(new_index, old_index, id)
+						_this.isShowDelete = false;
+						_this.pageIsChange();
 						let obj = {
 							id: to_id,
 							old_index: new_index,
@@ -191,7 +192,10 @@
 							type: 'sort',
 						};
 						this.back_data.push(obj);
-						// console.log(this.back_data);
+						if(this.back_data.length > this.back_advance_len) {
+							this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+						}
+						// console.log(this.back_data.length);
 					}
 				};
 				if(level == -1) {
@@ -314,7 +318,9 @@
 					index: 0,
 				};
 				this.back_data.push(obj);
-				
+				if(this.back_data.length > this.back_advance_len) {
+					this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+				}
 				// 当组件内部存在 sortable 盒子时，初始化该盒子
 				if(attr_obj.child_id) {
 					setTimeout(() => {
@@ -324,7 +330,7 @@
 			},
 			// 更新组件属性内容
 			updateAttr(data) {
-				// console.log('update', data);
+				console.log('更新组件内容');
 				const _this = this;
 				let sorts = this.sorts;
 				
@@ -338,8 +344,13 @@
 							unique: sorts.child[k].unique,
 							item,
 						};
-						this.back_data.push(obj);
-						// console.log(item);
+						// 当最后一次返回的数据和当前更新的数据一样则不再添加到返回上一步列表中
+						if(JSON.stringify(obj) != JSON.stringify(this.back_last_data)) {
+							this.back_data.push(obj);
+							if(this.back_data.length > this.back_advance_len) {
+								this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+							}
+						}
 						for(let kk in data)
 						{
 							_this.sorts.child[k][kk] = data[kk];
@@ -422,6 +433,9 @@
 							item: sorts.child[k],
 						}
 						this.back_data.push(obj);
+						if(this.back_data.length > this.back_advance_len) {
+							this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+						}
 						sorts.child.splice(k, 1);
 						flag = true;
 						break;
@@ -468,7 +482,8 @@
 				const _this = this;
 				let sorts = this.sorts;
 				let obj = this.back_data.pop();
-				// console.log('obj:', obj)
+				console.log('obj:', JSON.parse(JSON.stringify(obj)))
+				console.log('obj:', this.back_data)
 				// 前进操作数据
 				this.advance_data.push(obj);
 				
@@ -522,6 +537,7 @@
 						this.$forceUpdate();
 						break;
 				}
+				this.back_last_data = JSON.parse(JSON.stringify(obj));
 				this.pageIsChange();
 				// console.log(obj, this.back_data);
 			},

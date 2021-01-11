@@ -3,7 +3,7 @@
 		
 		<view class="button">
 			<u-button
-				:type="dat.button_type" 
+				:type="dat.theme_type" 
 				:size="dat.button_size"
 				:plain="dat.button_plain=='false'?false:true"
 				:shape="dat.button_shape"
