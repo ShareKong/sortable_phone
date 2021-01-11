@@ -316,6 +316,7 @@
 					id: this.sorts.id,
 					type: 'add',
 					index: 0,
+					item: attr_obj,
 				};
 				this.back_data.push(obj);
 				if(this.back_data.length > this.back_advance_len) {
@@ -330,7 +331,7 @@
 			},
 			// 更新组件属性内容
 			updateAttr(data) {
-				console.log('更新组件内容');
+				// console.log('更新组件内容');
 				const _this = this;
 				let sorts = this.sorts;
 				
@@ -343,6 +344,7 @@
 							type: 'update',
 							unique: sorts.child[k].unique,
 							item,
+							new_data: data
 						};
 						// 当最后一次返回的数据和当前更新的数据一样则不再添加到返回上一步列表中
 						if(JSON.stringify(obj) != JSON.stringify(this.back_last_data)) {
@@ -377,7 +379,7 @@
 						}
 					}
 				}
-				console.log('删除成功')
+				// console.log('删除成功')
 				// this.saveLayout();
 				// window.parent.postMessage({
 				// 	method: 'deleteSuccess',
@@ -482,11 +484,14 @@
 				const _this = this;
 				let sorts = this.sorts;
 				let obj = this.back_data.pop();
-				console.log('obj:', JSON.parse(JSON.stringify(obj)))
-				console.log('obj:', this.back_data)
+				// console.log('obj:', JSON.parse(JSON.stringify(obj)))
+				// console.log('obj:', this.back_data)
 				// 前进操作数据
-				this.advance_data.push(obj);
-				
+				this.advance_data.push(JSON.parse(JSON.stringify(obj)));
+				if(this.advance_data.length > this.back_advance_len) {
+					this.advance_data = this.advance_data.slice(this.advance_data.length - this.back_advance_len);
+				}
+				// console.log(this.advance_data)
 				switch(obj.type)
 				{
 					case 'sort':
@@ -566,7 +571,7 @@
 				const _this = this;
 				let sorts = this.sorts;
 				let obj = this.advance_data.pop();
-				console.log('advance:', this.advance_data);
+				// console.log('advance:', JSON.parse(JSON.stringify(obj)));
 				switch(obj.type)
 				{
 					case 'sort':
@@ -575,7 +580,6 @@
 					case 'delete':
 						if(sorts.id == obj.id) {
 							this.sorts.child.splice(obj.index, 1);
-							// console.log(obj)
 							if(obj.item.child_id) {
 								setTimeout(() => {
 									_this.initSortable(obj.item.child_id, _this.isPhone, 2);
@@ -586,23 +590,23 @@
 							let childs = sorts.child;
 							for(let k in childs)
 							{
-								if(childs[k].id == obj.id) {
+								if(childs[k].child_id == obj.child_id) {
 									this.sorts.child[k].child.splice(obj.index, 1);
 								}
 							}
 						}
 						break;
 					case 'add':
-						this.sorts.child.splice(obj.index, 0, obj);
+						this.sorts.child.splice(obj.index, 0, obj.item);
 						break;
 					case 'update':
 						if(sorts.id == obj.id) {
 							for(let k in sorts.child)
 							{
 								if(sorts.child[k].unique == obj.unique) {
-									for(let kk in obj.item)
+									for(let kk in obj.new_data)
 									{
-										this.sorts.child[k][kk] = obj.item[kk];
+										this.sorts.child[k][kk] = obj.new_data[kk];
 									}
 									break;
 								}
@@ -612,7 +616,7 @@
 						window.parent.postMessage({
 							method: 'activeGetUnique',
 							data: {
-								item: JSON.parse(JSON.stringify(obj.item))
+								item: JSON.parse(JSON.stringify(obj.new_data))
 							}
 						}, '*');
 						this.$forceUpdate();
