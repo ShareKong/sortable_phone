@@ -10,7 +10,18 @@ const getSortable = (id) => {
 	})
 }
 
+// 获取页面主题
+const getPageTheme = () => {
+	let url = '/get_theme';
+	return http.$u.get(url).then(res => {
+		return res;
+	}).catch(err => {
+		return err;
+	})
+}
+
 
 export default {
 	getSortable,
+	getPageTheme,
 }

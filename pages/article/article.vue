@@ -1,5 +1,5 @@
 <template>
-	<view class="content">
+	<view class="content" :style="{'background-color': page_info.page_background_color}">
 		<!-- 删除 sortable -->
 		<!-- <div id="del" class="sortable-panel sortable_delete" v-show="!isPhone&&isShowDelete" :class="{'': isShowDeleteStyle}">
 			<image style="width: 100rpx;height: 100rpx;opacity: 0.7;" src="@/static/icon-img/delete.png" mode=""></image>
@@ -20,6 +20,10 @@
 				
 				<st-applys v-if="result.sorts == 'st-applys'" :isPhone="isPhone" :dat="result" @getUnique="activeGetUnique"></st-applys>
 				
+				<st-notice v-if="result.sorts == 'st-notice'" :isPhone="isPhone" :dat="result" @getUnique="activeGetUnique"></st-notice>
+				
+				<st-shop-list v-if="result.sorts == 'st-shop-list'" :isPhone="isPhone" :dat="result" @getUnique="activeGetUnique"></st-shop-list>
+				
 			</template>
 		</view>
 	</view>
@@ -34,6 +38,8 @@
 	import STbutton from '@/components/ST/ST-button/ST-button.vue';
 	import STinput from '@/components/ST/ST-input/ST-input.vue';
 	import STapplys from '@/components/ST/ST-applys/ST-applys.vue';
+	import STnotice from '@/components/ST/ST-notice/ST-notice.vue';
+	import STshoplist from '@/components/ST/ST-shop-list/ST-shop-list.vue';
 	
 	export default {
 		components: {
@@ -44,10 +50,14 @@
 			'st-button': STbutton,
 			'st-input': STinput,
 			'st-applys': STapplys,
+			'st-notice': STnotice,
+			'st-shop-list': STshoplist,
 		},
 		
 		data() {
 			return {
+				// 保存页面信息
+				page_info: {},
 				// 保存布局的原始数据（不可改变）
 				data_sorts: [],
 				// 项目的布局数据（可改变）
@@ -64,6 +74,12 @@
 				id: 1006,
 				// 用于返回操作
 				back_data: [],
+				// 用于前进操作
+				advance_data: [],
+				// 保存最后一次返回上一步操作的数据
+				back_last_data: {},
+				// 后退和前进最多能保存长度
+				back_advance_len: 10,
 			}
 		},
 		mounted() {
@@ -81,40 +97,35 @@
 				}
 			}, 500)
 			// _this.initSortable('del', false, -1);
+			this.getPageTheme();
 		},
 		computed: {
 			// 监听页面布局是否发生改变
 			isPageChange() {
 				return this.data_sorts == JSON.stringify(this.sorts);
 			},
+			
 		},
 		methods: {
 			// 获取布局数据
 			async getEff(flag) {
 				const _this = this;
-				await uni.request({
-					url: 'http://thinkphp/get_data?id=' + _this.id,
-					method: 'GET',
-					success: async res => {
-						_this.data_sorts = res.data.sortable;
-						_this.sorts = await JSON.parse(res.data.sortable);
-						// console.log(_this.sorts)
-						// console.log(JSON.stringify(_this.sorts))
-						_this.initSortable('sort-1', flag, 1);
-						setTimeout(() => {
-							for(let k in _this.sorts.child)
-							{
-								if(_this.sorts.child[k].child_id) {
-									_this.initSortable(_this.sorts.child[k].child_id, flag, 2);
-								}
+				this.http.getSortable(_this.id).then(async res => {
+					_this.page_info = res;
+					_this.data_sorts = res.sortable;
+					_this.sorts = await JSON.parse(res.sortable);
+					// console.log(_this.sorts)
+					// console.log(JSON.stringify(_this.sorts))
+					_this.initSortable('sort-1', flag, 1);
+					_this.setPageInfo(res);
+					setTimeout(() => {
+						for(let k in _this.sorts.child)
+						{
+							if(_this.sorts.child[k].child_id) {
+								_this.initSortable(_this.sorts.child[k].child_id, flag, 2);
 							}
-						}, 100)
-					},
-					// fail: async err => {
-					// 	if(uni.getStorageSync('sortable')) {
-					// 		_this.sorts = uni.getStorageSync('sortable');
-					// 	}
-					// }
+						}
+					}, 100)
 				})
 			},
 			// 初始化 sortable
@@ -141,14 +152,6 @@
 					handle: '.st-item-handle-1',
 					onStart: (evt) => {
 						_this.isShowDelete = true;
-					},
-					onEnd: (evt) => {
-						// console.log(evt);
-						let old_index = evt.oldIndex;
-						let new_index = evt.newIndex;
-						_this.saveSort(new_index, old_index, id)
-						_this.isShowDelete = false;
-						_this.pageIsChange();
 					},
 					// 该方法目前争对删除框
 					onAdd: (evt) => {
@@ -179,10 +182,14 @@
 					// 只有在盒子内可移动项的排序发生改变时才会触发
 					onUpdate: (evt) => {
 						// console.log('update sort', evt)
+						// console.log('sort end');
 						let to_id = evt.to.id;
 						let from_id = evt.from.id;
 						let old_index = evt.oldIndex;
 						let new_index = evt.newIndex;
+						_this.saveSort(new_index, old_index, id)
+						_this.isShowDelete = false;
+						_this.pageIsChange();
 						let obj = {
 							id: to_id,
 							old_index: new_index,
@@ -190,7 +197,10 @@
 							type: 'sort',
 						};
 						this.back_data.push(obj);
-						// console.log(this.back_data);
+						if(this.back_data.length > this.back_advance_len) {
+							this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+						}
+						// console.log(this.back_data.length);
 					}
 				};
 				if(level == -1) {
@@ -263,6 +273,15 @@
 					case 'backData':
 						_this.backData();
 						break;
+					case 'advance':
+						_this.advance();
+						break;
+					case 'setPageSuccess':
+						_this.setPageSuccess();
+						break;
+					case 'updatePageTheme':
+						_this.updatePageTheme();
+						break;
 				}
 			},
 			// 保存布局到数据库
@@ -305,9 +324,12 @@
 					id: this.sorts.id,
 					type: 'add',
 					index: 0,
+					item: attr_obj,
 				};
 				this.back_data.push(obj);
-				
+				if(this.back_data.length > this.back_advance_len) {
+					this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+				}
 				// 当组件内部存在 sortable 盒子时，初始化该盒子
 				if(attr_obj.child_id) {
 					setTimeout(() => {
@@ -317,7 +339,7 @@
 			},
 			// 更新组件属性内容
 			updateAttr(data) {
-				// console.log('update', data);
+				// console.log('更新组件内容');
 				const _this = this;
 				let sorts = this.sorts;
 				
@@ -330,9 +352,15 @@
 							type: 'update',
 							unique: sorts.child[k].unique,
 							item,
+							new_data: data
 						};
-						this.back_data.push(obj);
-						// console.log(item);
+						// 当最后一次返回的数据和当前更新的数据一样则不再添加到返回上一步列表中
+						if(JSON.stringify(obj.item) != JSON.stringify(this.back_last_data.item)) {
+							this.back_data.push(obj);
+							if(this.back_data.length > this.back_advance_len) {
+								this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+							}
+						}
 						for(let kk in data)
 						{
 							_this.sorts.child[k][kk] = data[kk];
@@ -359,7 +387,7 @@
 						}
 					}
 				}
-				console.log('删除成功')
+				// console.log('删除成功')
 				// this.saveLayout();
 				// window.parent.postMessage({
 				// 	method: 'deleteSuccess',
@@ -415,6 +443,9 @@
 							item: sorts.child[k],
 						}
 						this.back_data.push(obj);
+						if(this.back_data.length > this.back_advance_len) {
+							this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
+						}
 						sorts.child.splice(k, 1);
 						flag = true;
 						break;
@@ -442,7 +473,7 @@
 					}
 				}
 				
-				// this.pageIsChange();
+				this.pageIsChange();
 				// if(flag) {
 				// 	window.parent.postMessage({
 				// 		method: 'deleteSuccess'
@@ -461,6 +492,14 @@
 				const _this = this;
 				let sorts = this.sorts;
 				let obj = this.back_data.pop();
+				// console.log('obj:', JSON.parse(JSON.stringify(obj)))
+				// console.log('obj:', this.back_data)
+				// 前进操作数据
+				this.advance_data.push(JSON.parse(JSON.stringify(obj)));
+				if(this.advance_data.length > this.back_advance_len) {
+					this.advance_data = this.advance_data.slice(this.advance_data.length - this.back_advance_len);
+				}
+				// console.log(this.advance_data)
 				switch(obj.type)
 				{
 					case 'sort':
@@ -469,7 +508,6 @@
 					case 'delete':
 						if(sorts.id == obj.id) {
 							this.sorts.child.splice(obj.index, 0, obj.item);
-							// console.log(obj)
 							if(obj.item.child_id) {
 								setTimeout(() => {
 									_this.initSortable(obj.item.child_id, _this.isPhone, 2);
@@ -512,6 +550,7 @@
 						this.$forceUpdate();
 						break;
 				}
+				this.back_last_data = JSON.parse(JSON.stringify(obj));
 				this.pageIsChange();
 				// console.log(obj, this.back_data);
 			},
@@ -532,6 +571,90 @@
 					}
 				}
 				return -1;
+			},
+			// 前进一步
+			advance() {
+				// 操作type: sort 排序 delete 删除 add 新增组件 update 更新组件属性
+				if(this.advance_data.length <= 0) return; 
+				const _this = this;
+				let sorts = this.sorts;
+				let obj = this.advance_data.pop();
+				// console.log('advance:', JSON.parse(JSON.stringify(obj)));
+				switch(obj.type)
+				{
+					case 'sort':
+						this.saveSort(obj.old_index, obj.new_index, obj.id);
+						break;
+					case 'delete':
+						if(sorts.id == obj.id) {
+							this.sorts.child.splice(obj.index, 1);
+							if(obj.item.child_id) {
+								setTimeout(() => {
+									_this.initSortable(obj.item.child_id, _this.isPhone, 2);
+								}, 100)
+							}
+						}
+						else {
+							let childs = sorts.child;
+							for(let k in childs)
+							{
+								if(childs[k].child_id == obj.child_id) {
+									this.sorts.child[k].child.splice(obj.index, 1);
+								}
+							}
+						}
+						break;
+					case 'add':
+						this.sorts.child.splice(obj.index, 0, obj.item);
+						break;
+					case 'update':
+						if(sorts.id == obj.id) {
+							for(let k in sorts.child)
+							{
+								if(sorts.child[k].unique == obj.unique) {
+									for(let kk in obj.new_data)
+									{
+										this.sorts.child[k][kk] = obj.new_data[kk];
+									}
+									break;
+								}
+							}
+						}
+						// 更新到父窗口
+						window.parent.postMessage({
+							method: 'activeGetUnique',
+							data: {
+								item: JSON.parse(JSON.stringify(obj.new_data))
+							}
+						}, '*');
+						this.$forceUpdate();
+						break;
+				}
+				this.pageIsChange();
+			},
+			// 设置页面信息
+			setPageInfo(page_info) {
+				uni.setNavigationBarTitle({
+					title: page_info.page_name,
+				})
+			},
+			// 页面信息设置成功
+			setPageSuccess() {
+				this.getEff();
+			},
+			// 获取页面主题并设置
+			getPageTheme(){
+				this.http.getPageTheme().then(res => {
+					setTimeout(() => {
+						uni.setNavigationBarColor({
+							backgroundColor: '#ff0000'
+						})
+					}, 1000)
+				})
+			},
+			// 更新页面主题
+			updatePageTheme() {
+				this.getPageTheme();
 			},
 			
 		}
@@ -564,7 +687,7 @@
 	}
 	
 	.content {
-		padding: 0 20rpx;
+		min-height: calc(100vh - 44px);
 
 		.sortable {
 			width: 100%;
@@ -572,6 +695,13 @@
 			>* {
 				margin-top: 30rpx;
 				margin-bottom: 30rpx;
+				&:first-child {
+					margin-top: 0;
+				}
+				&:last-child {
+					margin-bottom: 0;
+					padding-bottom: 30rpx;
+				}
 			}
 		}
 	}

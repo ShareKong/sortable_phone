@@ -97,6 +97,7 @@
 				}
 			}, 500)
 			// _this.initSortable('del', false, -1);
+			this.getPageTheme();
 		},
 		computed: {
 			// 监听页面布局是否发生改变
@@ -277,6 +278,9 @@
 						break;
 					case 'setPageSuccess':
 						_this.setPageSuccess();
+						break;
+					case 'updatePageTheme':
+						_this.updatePageTheme();
 						break;
 				}
 			},
@@ -637,6 +641,20 @@
 			// 页面信息设置成功
 			setPageSuccess() {
 				this.getEff();
+			},
+			// 获取页面主题并设置
+			getPageTheme(){
+				this.http.getPageTheme().then(res => {
+					setTimeout(() => {
+						uni.setNavigationBarColor({
+							backgroundColor: '#ff0000'
+						})
+					}, 1000)
+				})
+			},
+			// 更新页面主题
+			updatePageTheme() {
+				this.getPageTheme();
 			},
 			
 		}

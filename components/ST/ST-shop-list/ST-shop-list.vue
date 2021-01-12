@@ -1,11 +1,11 @@
 <template>
 	<view class="st-shop-list">
 		<template v-if="dat.list_type!='list-type-6'">
-			<view class="shop-list" :class="[list_type[dat.list_type], shop_type[dat.shop_type]]">
+			<view class="shop-list" :class="[list_type[dat.list_type]]">
 				<template v-for="(item,index) in list">
 					<view class="shop">
 						<view class="img">
-							<img class="image" :class="[shop_shape[dat.shop_shape]]" :src="item.img_url"></img>
+							<image class="image" :class="[shop_shape[dat.shop_shape]]" :src="item.img_url" :mode="dat.list_type=='list-type-1'?'top':''"></image>
 						</view>
 						<view class="main">
 							<view class="shop-body">
@@ -14,7 +14,7 @@
 							</view>
 							<view class="shop-foot">
 								<view><text v-if="dat.is_show_price">{{item.price}}</text></view>
-								<u-button :type="dat.button_type" size="mini">{{dat.button_text}}</u-button>
+								<view><u-button v-if="dat.is_show_button" :type="dat.button_type" size="mini">{{dat.button_text}}</u-button></view>
 							</view>
 						</view>
 					</view>
@@ -23,7 +23,7 @@
 		</template>
 		<template v-else>
 			<view class="water-fall">
-				<view class="shop-list shop-list-6" :class="[shop_type[dat.shop_type]]">
+				<view class="shop-list shop-list-6">
 					<template v-for="(item,index) in list_1">
 						<view class="shop">
 							<view class="img">
@@ -36,13 +36,13 @@
 								</view>
 								<view class="shop-foot">
 									<view><text v-if="dat.is_show_price">{{item.price}}</text></view>
-									<u-button :type="dat.button_type" size="mini">{{dat.button_text}}</u-button>
+									<view><u-button v-if="dat.is_show_button" :type="dat.button_type" size="mini">{{dat.button_text}}</u-button></view>
 								</view>
 							</view>
 						</view>
 					</template>
 				</view>
-				<view class="shop-list shop-list-6" :class="[shop_type[dat.shop_type]]">
+				<view class="shop-list shop-list-6">
 					<template v-for="(item,index) in list_2">
 						<view class="shop">
 							<view class="img">
@@ -55,7 +55,7 @@
 								</view>
 								<view class="shop-foot">
 									<view><text v-if="dat.is_show_price">{{item.price}}</text></view>
-									<u-button :type="dat.button_type" size="mini">{{dat.button_text}}</u-button>
+									<view><u-button v-if="dat.is_show_button" :type="dat.button_type" size="mini">{{dat.button_text}}</u-button></view>
 								</view>
 							</view>
 						</view>
@@ -87,11 +87,6 @@
 					'list-type-4': 'shop-list-4',
 					'list-type-5': 'shop-list-5',
 					'list-type-6': 'shop-list-6',
-				},
-				// 商品样式
-				shop_type: {
-					'shop-type-1': ['main-1', 'main-1-1'],
-					'shop-type-2': 'main-2',
 				},
 				// 图片角样式表
 				shop_shape: {
@@ -226,9 +221,9 @@
 								font-size: 0.7rem;
 							}
 						}
-					}
-					>button {
-						margin: 0;
+						>button {
+							margin: 0;
+						}
 					}
 				}
 			}
@@ -240,7 +235,7 @@
 				margin-bottom: 20rpx;
 				.img {
 					width: calc(750upx - 20rpx);
-					height: calc(750upx - 20rpx);
+					height: calc(750upx - 320rpx);
 				}
 				.main {
 					margin-top: 10rpx;
