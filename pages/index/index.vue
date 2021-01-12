@@ -351,7 +351,7 @@
 							new_data: data
 						};
 						// 当最后一次返回的数据和当前更新的数据一样则不再添加到返回上一步列表中
-						if(JSON.stringify(obj) != JSON.stringify(this.back_last_data)) {
+						if(JSON.stringify(obj.item) != JSON.stringify(this.back_last_data.item)) {
 							this.back_data.push(obj);
 							if(this.back_data.length > this.back_advance_len) {
 								this.back_data = this.back_data.slice(this.back_data.length - this.back_advance_len);
