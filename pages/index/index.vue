@@ -22,6 +22,8 @@
 				
 				<st-notice v-if="result.sorts == 'st-notice'" :isPhone="isPhone" :dat="result" @getUnique="activeGetUnique"></st-notice>
 				
+				<st-shop-list v-if="result.sorts == 'st-shop-list'" :isPhone="isPhone" :dat="result" @getUnique="activeGetUnique"></st-shop-list>
+				
 			</template>
 		</view>
 	</view>
@@ -37,6 +39,7 @@
 	import STinput from '@/components/ST/ST-input/ST-input.vue';
 	import STapplys from '@/components/ST/ST-applys/ST-applys.vue';
 	import STnotice from '@/components/ST/ST-notice/ST-notice.vue';
+	import STshoplist from '@/components/ST/ST-shop-list/ST-shop-list.vue';
 	
 	export default {
 		components: {
@@ -48,6 +51,7 @@
 			'st-input': STinput,
 			'st-applys': STapplys,
 			'st-notice': STnotice,
+			'st-shop-list': STshoplist,
 		},
 		
 		data() {
@@ -665,7 +669,6 @@
 	}
 	
 	.content {
-		padding: 20rpx 20rpx;
 		min-height: calc(100vh - 44px);
 
 		.sortable {
@@ -679,6 +682,7 @@
 				}
 				&:last-child {
 					margin-bottom: 0;
+					padding-bottom: 30rpx;
 				}
 			}
 		}
