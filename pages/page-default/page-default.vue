@@ -111,13 +111,13 @@
 			async getEff(flag) {
 				const _this = this;
 				this.http.getSortable(_this.id).then(async res => {
-					_this.page_info = res;
-					_this.data_sorts = res.sortable;
-					_this.sorts = await JSON.parse(res.sortable);
+					_this.page_info = res.data[0];
+					_this.data_sorts = res.data[0].sortable;
+					_this.sorts = await JSON.parse(res.data[0].sortable);
 					// console.log(_this.sorts)
 					// console.log(JSON.stringify(_this.sorts))
 					_this.initSortable('sort-1', flag, 1);
-					_this.setPageInfo(res);
+					_this.setPageInfo(res.data[0]);
 					setTimeout(() => {
 						for(let k in _this.sorts.child)
 						{
@@ -288,24 +288,16 @@
 			saveLayout() {
 				const _this = this;
 				let sorts = JSON.stringify(this.sorts);
-				uni.request({
-					url: 'http://thinkphp/update_data',
-					method: 'POST',
-					data: {
-						id: _this.id,
-						sortable: sorts
-					},
-					success(res) {
-						if(res.statusCode == 200) {
-							window.parent.postMessage({
-								method: 'saveSuccess',
-							}, '*');
-						}
-						else {
-							window.parent.postMessage({
-								method: 'saveFail',
-							}, '*');
-						}
+				this.http.saveLayout({id: _this.id,sortable: sorts}).then(res => {
+					if(res.status == 200) {
+						window.parent.postMessage({
+							method: 'saveSuccess',
+						}, '*');
+					}
+					else {
+						window.parent.postMessage({
+							method: 'saveFail',
+						}, '*');
 					}
 				})
 			},
@@ -645,6 +637,7 @@
 			// 获取页面主题并设置
 			getPageTheme(){
 				this.http.getPageTheme().then(res => {
+					console.log(res.data.value)
 					setTimeout(() => {
 						uni.setNavigationBarColor({
 							backgroundColor: '#ff0000'

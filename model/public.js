@@ -2,7 +2,7 @@ import http from '../main.js'
 
 // 请求 Sortable
 const getSortable = (id) => {
-	let url = 'get_data?id=' + id;
+	let url = '/zt/get_all?id=' + id;
 	return http.$u.get(url).then(res => {
 		return res;
 	}).catch(err => {
@@ -12,8 +12,18 @@ const getSortable = (id) => {
 
 // 获取页面主题
 const getPageTheme = () => {
-	let url = '/get_theme';
+	let url = '/zt/get_zt';
 	return http.$u.get(url).then(res => {
+		return res;
+	}).catch(err => {
+		return err;
+	})
+}
+
+// 保存页面布局
+const saveLayout = (data) => {
+	let url = '/zt/up_sor';
+	return http.$u.post(url, data).then(res => {
 		return res;
 	}).catch(err => {
 		return err;
@@ -24,4 +34,5 @@ const getPageTheme = () => {
 export default {
 	getSortable,
 	getPageTheme,
+	saveLayout,
 }

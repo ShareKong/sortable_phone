@@ -6,6 +6,8 @@
 				:list="list"
 				:type="dat.theme_type"
 				:mode="dat.notice_scroll"
+				:speed="dat.notice_speed"
+				:volume-icon="dat.notice_volume_icon=='true'?true:false"
 				:is-circular="dat.notice_join=='false'?false:true"
 			></u-notice-bar>
 		</view>

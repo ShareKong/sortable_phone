@@ -1,6 +1,10 @@
 <template>
-	<view class="ipt">
-		<u-input type="text" v-model="dat.default_value" :placeholder="dat.placeholder||'请输入内容'"/>
+	<view class="st-input">
+		
+		<view class="input">
+			<u-input :type="dat.input_type" v-model="dat.default_value" :placeholder="dat.placeholder||'请输入内容'"/>
+		</view>
+		
 		<move-handle :isPhone="isPhone" @choose="activeGetSorts"></move-handle>
 	</view>
 </template>
@@ -28,4 +32,7 @@
 </script>
 
 <style lang="scss" scoped>
+.input {
+	padding: 8rpx 20rpx;
+}
 </style>

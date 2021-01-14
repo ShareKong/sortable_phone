@@ -1,8 +1,18 @@
 <template>
 	<view :class="{'st-item-fixed': dat.disable&&!isPhone}" class="search">
-		<image class="img" src="@/static/icon-img/search.png" mode=""></image>
-		<input class="search-input" type="text" v-model="search" placeholder="请输入关键词" />
-		<u-button @tap="searchSubmit" class="search-btn" type="primary" size="mini">search</u-button>
+		
+		<view class="search">
+			<u-search
+			  :show-action="dat.search_show_action=='false'?false:true"
+			  :input-align="dat.search_input_align"
+			  :action-text="dat.search_action_text"
+			  :placeholder="dat.placeholder"
+			  v-model="dat.default_value"
+			  :shape="dat.search_shape"
+			  :clearabled="dat.search_clearabled=='false'?false:true"
+			  ></u-search>
+		</view>
+		
 		<move-handle :isPhone="isPhone" @choose="activeGetSorts"></move-handle>
 	</view>
 </template>
@@ -41,7 +51,8 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 0 0 20rpx 0;
-	border-bottom: 2rpx solid #eee;
+	// border-bottom: 2rpx solid #eee;
+	padding: 10rpx 10rpx;
 
 	.img {
 		width: 50rpx;
