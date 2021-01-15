@@ -71,7 +71,7 @@
 				// 要删除的组件 unique
 				delete_unique: -1,
 				// 当前页面请求数据排版的id
-				id: 1000,
+				id: -1,
 				// 用于返回操作
 				back_data: [],
 				// 用于前进操作
@@ -82,13 +82,19 @@
 				back_advance_len: 10,
 			}
 		},
+		onLoad(options) {
+			if(options.id) {
+				this.id = options.id;
+			}
+		},
 		mounted() {
 			window.addEventListener('message', this.save);
 			let isPhone = navigator.userAgent.toLowerCase();
 			const _this = this;
 			setTimeout(() => {
+				// 当该项目是在PC端打开时
 				if(isPhone.indexOf('windows') != -1) {
-					_this.getEff(false);
+					// _this.getEff(false);
 					_this.isPhone = false;
 				}
 				else {
@@ -281,6 +287,9 @@
 						break;
 					case 'updatePageTheme':
 						_this.updatePageTheme();
+						break;
+					case 'sendID':
+						_this.sendID(data);
 						break;
 				}
 			},
@@ -637,10 +646,10 @@
 			// 获取页面主题并设置
 			getPageTheme(){
 				this.http.getPageTheme().then(res => {
-					console.log(res.data.value)
+					// console.log(res.data.value)
 					setTimeout(() => {
 						uni.setNavigationBarColor({
-							backgroundColor: '#ff0000'
+							backgroundColor: res.data.value
 						})
 					}, 1000)
 				})
@@ -648,6 +657,12 @@
 			// 更新页面主题
 			updatePageTheme() {
 				this.getPageTheme();
+			},
+			// 接收父窗口传来的页面 id
+			sendID(data) {
+				// console.log('------', data)
+				this.id = data.id;
+				this.getEff(false);
 			},
 			
 		}

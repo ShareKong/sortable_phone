@@ -54,7 +54,7 @@
 	align-items: center;
 	background-color: #f0f0f0;
 	z-index: 997;
-	opacity: 0.1;
+	// opacity: 0.1;
 	&:hover {
 		background-color: #e6e6e6;
 	}
